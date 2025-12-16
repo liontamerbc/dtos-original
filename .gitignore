@@ -1,0 +1,23 @@
+# Build outputs and caches
+dmenu-dt/*.o
+dmenu-dt/stest
+dmenu-dt/dmenu
+dmenu-dt/dmenu_path
+dmenu-dt/dmenu_run
+dmenu-dt/dmenu.d
+dmenu-dt/stest.d
+
+qtile/__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Lua bytecode
+**/*.luac
+
+# Editor/tool caches
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+*.log

@@ -1,0 +1,11 @@
+#!/bin/sh
+export _JAVA_AWT_WM_NONREPARENTING=1
+
+# Hardcode colors so wal/Xresources cannot override the menu palette
+DMENU_COLORS='-nb #282a36 -nf #f8f8f2 -sb #bd93f9 -sf #282a36'
+DMENU_FONT='-fn Ubuntu Mono-12'
+
+exec $(dmenu_path | dmenu $DMENU_FONT $DMENU_COLORS "$@")
+
+# Uncomment for the NAVHISTORY patch (and remove the exec above)
+#dmenu_path | dmenu -H "${XDG_CACHE_HOME:-$HOME/.cache/}/dmenu_run.hist" "$@" | ${SHELL:-"/bin/sh"} &

@@ -1,0 +1,4 @@
+#!/bin/sh
+# DTOS-style run launcher: dmenu_run with pink selection bar only
+
+exec dmenu_run -i -l 20 -sb '#ff79c6' -p

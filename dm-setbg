@@ -1,0 +1,175 @@
+#!/bin/sh
+# DTOS-style wallpaper script (fixed for Qtile & Awesome)
+#  - Menu: Set / Random / Exit (via dmenu)
+#  - Set: open sxiv/fzf/dmenu picker
+#  - Random: pick random wallpaper
+#  - Per-WM folders: Awesome vs Qtile
+#  - Qtile updates ~/.cache/wall_qtile
+#  - Awesome updates ~/.cache/wall_awesome
+
+DMENU="dmenu -i -l 10"
+BASE_DIR="/usr/share/backgrounds/dtos-backgrounds"
+WALL_DIR="$BASE_DIR"
+
+# Detect if a display server is available (Wayland or X11)
+has_display() {
+    [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]
+}
+
+# Pick menu type: prefer dmenu when a display is available, otherwise fall back to fzf.
+MENU_TYPE="dmenu"
+if ! has_display || ! command -v "${DMENU%% *}" >/dev/null 2>&1; then
+    if command -v fzf >/dev/null 2>&1; then
+        MENU_TYPE="fzf"
+    else
+        MENU_TYPE="none"
+    fi
+fi
+
+# Detect session and choose per-WM wallpaper folder
+ses_str="$(printf '%s
+' "$XDG_CURRENT_DESKTOP" "$DESKTOP_SESSION")"
+if printf '%s
+' "$ses_str" | grep -qi 'qtile'; then
+    if [ -d "$BASE_DIR/qtile" ]; then
+        WALL_DIR="$BASE_DIR/qtile"
+    fi
+elif printf '%s
+' "$ses_str" | grep -qi 'awesome'; then
+    if [ -d "$BASE_DIR/awesome" ]; then
+        WALL_DIR="$BASE_DIR/awesome"
+    fi
+fi
+
+# Helper: apply wallpaper and update per-WM cache
+set_bg() {
+    img="$1"
+    [ -z "$img" ] && return 1
+
+    if ! has_display; then
+        printf '%s\n' "No display server detected; cannot set wallpaper." >&2
+        return 1
+    fi
+
+    session_type="x11"
+    [ -n "$WAYLAND_DISPLAY" ] && session_type="wayland"
+
+    if [ "$session_type" = "wayland" ]; then
+        # Try Qtile's built-in wallpaper command first (works on Wayland)
+        if command -v qtile >/dev/null 2>&1; then
+            qtile cmd-obj -o screen 0 -f set_wallpaper -a "['$img','fill']" >/dev/null 2>&1 || true
+            # Also try other screens (ignore failures)
+            qtile cmd-obj -o screen 1 -f set_wallpaper -a "['$img','fill']" >/dev/null 2>&1 || true
+        fi
+
+        if command -v swaybg >/dev/null 2>&1; then
+            pkill swaybg 2>/dev/null
+            swaybg -m fill -i "$img" &
+        elif command -v swww >/dev/null 2>&1; then
+            pgrep -x swww-daemon >/dev/null 2>&1 || swww-daemon &
+            swww img "$img" --transition-type simple --transition-fps 30 &
+        else
+            printf '%s\n' "No Wayland wallpaper setter found (install swaybg or swww)" >&2
+            return 1
+        fi
+    else
+        # Apply wallpaper via xwallpaper or feh on X11
+        if command -v xwallpaper >/dev/null 2>&1; then
+            xwallpaper --stretch "$img"
+        elif command -v feh >/dev/null 2>&1; then
+            feh --bg-fill "$img"
+        else
+            xsetroot -solid black
+        fi
+    fi
+
+    # Update persistent cache per WM
+    ses_str="$(printf '%s\n' "$XDG_CURRENT_DESKTOP" "$DESKTOP_SESSION")"
+    if printf '%s\n' "$ses_str" | grep -qi 'qtile'; then
+        mkdir -p "$HOME/.cache"
+        printf '%s\n' "$img" > "$HOME/.cache/wall_qtile"
+    elif printf '%s\n' "$ses_str" | grep -qi 'awesome'; then
+        mkdir -p "$HOME/.cache"
+        printf '%s\n' "$img" > "$HOME/.cache/wall_awesome"
+    fi
+
+}
+
+# Quick random mode: dm-setbg -r / --random
+if [ "$1" = "-r" ] || [ "$1" = "--random" ]; then
+    img="$(find "$WALL_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null | shuf -n 1)"
+    [ -z "$img" ] && exit 0
+    set_bg "$img"
+    exit 0
+fi
+
+# Generic menu helper
+select_with_menu() {
+    prompt="$1"
+    shift
+    case "$MENU_TYPE" in
+        fzf)
+            printf '%s\n' "$@" | fzf --prompt "$prompt " --height 40% --border --reverse
+            ;;
+        dmenu)
+            printf '%s\n' "$@" | $DMENU -p "$prompt"
+            ;;
+        *)
+            printf '%s\n' "" # return empty selection
+            ;;
+    esac
+}
+
+# Pick an image using the best available selector
+pick_image() {
+    if has_display && command -v sxiv >/dev/null 2>&1; then
+        sxiv -t -o "$WALL_DIR" 2>/dev/null | head -n 1
+        return
+    fi
+
+    if command -v fzf >/dev/null 2>&1; then
+        find "$WALL_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null \
+            | fzf --prompt 'Select wallpaper: ' --height 60% --border --reverse
+        return
+    fi
+
+    if [ "$MENU_TYPE" = "dmenu" ] && command -v "${DMENU%% *}" >/dev/null 2>&1; then
+        find "$WALL_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null \
+            | $DMENU -p 'Select wallpaper:'
+        return
+    fi
+
+    printf '%s\n' ""
+}
+
+# Top-level menu
+case "$MENU_TYPE" in
+    none)
+        printf '%s\n' "No menu program available (need dmenu or fzf)." >&2
+        exit 1
+        ;;
+    *)
+        choice="$(select_with_menu 'Wallpaper action:' "Set" "Random" "Exit")"
+        ;;
+esac
+
+[ -z "$choice" ] && exit 0
+
+case "$choice" in
+  "Set")
+    img="$(pick_image)"
+
+    [ -z "$img" ] && exit 0
+    set_bg "$img"
+    ;;
+
+  "Random")
+    img="$(find "$WALL_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null | shuf -n 1)"
+    [ -z "$img" ] && exit 0
+    set_bg "$img"
+    ;;
+
+  "Exit")
+    exit 0
+    ;;
+esac

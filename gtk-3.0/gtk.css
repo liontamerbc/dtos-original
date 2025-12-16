@@ -1,0 +1,32 @@
+/* Force Thunar to use the DTOS palette instead of transparent/black */
+@define-color dtos-bg #282c34;
+@define-color dtos-sidebar #1c1f24;
+@define-color dtos-text #dfdfdf;
+
+thunar-window,
+thunar-window .standard-view,
+thunar-window treeview.view,
+thunar-window iconview.view {
+    background-color: @dtos-bg;
+    color: @dtos-text;
+}
+
+thunar-window .sidebar,
+thunar-window .sidebar .view {
+    background-color: @dtos-sidebar;
+    color: @dtos-text;
+}
+
+thunar-window .sidebar .view:selected,
+thunar-window .sidebar row:selected,
+thunar-window treeview.view:selected,
+thunar-window iconview.view:selected {
+    background-color: shade(@dtos-sidebar, 1.15);
+    color: @dtos-text;
+}
+
+thunar-window .sidebar row:selected label,
+thunar-window .view:selected label,
+thunar-window treeview.view:selected label {
+    color: @dtos-text;
+}

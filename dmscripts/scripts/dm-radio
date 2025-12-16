@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+DMTERM="st -e"
+DMENU="dmenu -i -l 20 -sb '#ff79c6' -p"
+#
+# Script name: dm-radio
+# Description: Choose between online radio stations; stations defined in dmscripts config.
+# Dependencies: dmenu, fzf, rofi, mpv, notify-send, yt-dlp
+# GitLab: https://www.gitlab.com/dwt1/dmscripts
+# License: https://www.gitlab.com/dwt1/dmscripts/LICENSE
+# Contributors: Derek Taylor
+
+# Set with the flags "-e", "-u","-o pipefail" cause the script to fail
+# if certain things happen, which is a good thing.  Otherwise, we can
+# get hidden bugs that are hard to discover.
+set -euo pipefail
+
+# shellcheck disable=SC1091
+source ./_dm-helper.sh 2>/dev/null || source _dm-helper.sh 2>/dev/null
+
+source_dmscripts_configs
+
+if configs_are_different; then
+    echo "$(date): configs are different" >>"$DM_CONFIG_DIFF_LOGFILE"
+    sleep 1
+fi
+
+top_menu() {
+    printf '%s\n' "Quit" "Radio" "YouTube Music"
+}
+
+# Prompt for a station within a given group; returns selection on stdout.
+choose_station_from_list() {
+    local prompt="$1"
+    local -n stations_ref="$2"
+
+    ((${#stations_ref[@]})) || return 1
+    printf '%s\n' "${stations_ref[@]}" | sort | ${MENU} "$prompt"
+}
+
+# Let the user pick between station groups before drilling down to a station.
+select_station_by_group() {
+    # shellcheck disable=SC2154
+    local -a hearts=()
+    local -a smooths=()
+    local -a others=()
+    local station
+
+    for station in "${!radio_stations[@]}"; do
+        case "$station" in
+        Heart*) hearts+=("$station") ;;
+        Smooth*) smooths+=("$station") ;;
+        *) others+=("$station") ;;
+        esac
+    done
+
+    local -a group_options=()
+    ((${#hearts[@]})) && group_options+=("Heart Stations")
+    ((${#smooths[@]})) && group_options+=("Smooth Stations")
+    ((${#others[@]})) && group_options+=("Other Stations")
+    group_options+=("Back")
+
+    while true; do
+        local group_choice station_choice
+        group_choice=$(printf '%s\n' "${group_options[@]}" | ${MENU} 'Choose radio group:') || return 1
+
+        case $group_choice in
+        "Heart Stations")
+            station_choice=$(choose_station_from_list "Choose Heart station:" hearts) || continue
+            ;;
+        "Smooth Stations")
+            station_choice=$(choose_station_from_list "Choose Smooth station:" smooths) || continue
+            ;;
+        "Other Stations")
+            station_choice=$(choose_station_from_list "Choose station:" others) || continue
+            ;;
+        "Back"|"")
+            return 1
+            ;;
+        *)
+            # Fallback to allow directly selecting a station if a group name was not expected.
+            if [[ -n ${radio_stations["${group_choice}"]+set} ]]; then
+                echo "$group_choice"
+                return 0
+            fi
+            continue
+            ;;
+        esac
+
+        echo "$station_choice"
+        return 0
+    done
+}
+
+# Functions for sending notification messages
+start_radio() {
+    notify-send "Starting dm-radio" "Playing station: $1. 🎶"
+}
+
+end_radio() {
+    notify-send "Stopping dm-radio" "You have quit dm-radio. 🎶"
+}
+
+main() {
+    if [ -z "${!radio_stations[*]}" ]; then
+        notify-send "dm-radio: BREAKING CHANGES" "Due to breaking changes you must edit all declare statements in your config to include the g option. declare -A -> declare -Ag, declare -a -> declare -ag"
+        echo "$(date): dm-radio: BREAKING CHANGES: Due to breaking changes you must edit all declare statements in your config to include the g option.
+are -A -> declare -Ag
+are -a -> declare -ag" >>"$DM_CONFIG_DIFF_LOGFILE"
+        sleep 2
+        exit 1
+    fi
+
+    # Top-level choice between radio presets and YouTube Music
+    while true; do
+        primary_choice=$(top_menu | ${MENU} 'Choose option:') || return 0
+
+        case $primary_choice in
+        Quit|"")
+            end_radio
+            pkill -f http || true
+            return 0
+            ;;
+        "YouTube Music")
+            notify-send "Starting dm-radio" "Opening YouTube Music. 🎶"
+            xdg-open "https://music.youtube.com" >/dev/null 2>&1 &
+            return 0
+            ;;
+        "Radio")
+            # Choosing a radio station from array sourced in 'config'.
+            while true; do
+                station_choice=$(select_station_by_group) || break
+                if [[ -n ${radio_stations["${station_choice}"]+set} ]]; then
+                    pkill -f http || echo "mpv not running."
+                    start_radio "$station_choice"
+                    mpv --volume="${DMRADIOVOLUME:-100}" "${radio_stations["${station_choice}"]}"
+                    return 0
+                fi
+            done
+            ;;
+        *)
+            # Fallback to old behavior if an unexpected option is provided
+            if [[ -n ${radio_stations["${primary_choice}"]+set} ]]; then
+                pkill -f http || echo "mpv not running."
+                start_radio "$primary_choice"
+                mpv --volume="${DMRADIOVOLUME:-100}" "${radio_stations["${primary_choice}"]}"
+                return 0
+            fi
+            ;;
+        esac
+    done
+
+}
+
+MENU="$(get_menu_program "$@")"
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && main

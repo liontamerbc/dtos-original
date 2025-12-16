@@ -1,0 +1,5 @@
+#!/bin/sh
+# Simple DTOS-style run launcher.
+# Let your patched dmenu + Xresources handle the theme.
+
+exec dmenu_run -p "Run:"
