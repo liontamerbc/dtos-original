@@ -2,12 +2,19 @@
 import os
 import socket
 import subprocess
+import shutil
 
 from libqtile import qtile, layout, bar, widget, hook
 from libqtile.config import Click, Drag, Group, KeyChord, Key, Match, Screen
 from libqtile.log_utils import logger
 from libqtile.lazy import lazy
 from typing import List  # noqa: F401
+
+try:
+    import psutil  # noqa: F401
+    HAS_PSUTIL = True
+except Exception:
+    HAS_PSUTIL = False
 
 IS_WAYLAND = os.environ.get("WAYLAND_DISPLAY") is not None
 
@@ -41,7 +48,7 @@ def start_once():
 # ---------- Basic settings ----------
 
 mod = "mod4"              # SUPER/WIN
-myTerm = "alacritty"
+myTerm = "alacritty" if shutil.which("alacritty") else "xterm"
 myBrowser = "firefox"
 myVirt = "virt-manager"
 myOffice = "libreoffice"
@@ -115,6 +122,67 @@ def move_window_to_group(base, screen_index=None):
             qtile.current_window.togroup(name)
 
     return _inner
+
+
+def detect_primary_interface():
+    """Return a best-guess network interface (non-loopback) or None."""
+    try:
+        entries = [e.name for e in os.scandir("/sys/class/net") if e.is_dir() and e.name != "lo"]
+    except Exception:
+        entries = []
+
+    if not entries:
+        return None
+
+    # Prefer common prefixes; fallback to the first sorted entry.
+    entries = sorted(entries)
+    for prefix in ("en", "eth", "wl", "wlp"):
+        for name in entries:
+            if name.startswith(prefix):
+                return name
+    return entries[0]
+
+
+def build_net_widget(foreground, background):
+    iface = detect_primary_interface()
+    if HAS_PSUTIL and iface:
+        return widget.Net(
+            interface=iface,
+            format="Net: {down} ↓↑ {up}",
+            foreground=foreground,
+            background=background,
+            padding=5,
+        )
+    text = "Net: N/A" if iface else "Net: no iface"
+    return widget.TextBox(text=text, foreground=foreground, background=background, padding=5)
+
+
+def build_memory_widget(foreground, background):
+    if HAS_PSUTIL:
+        return widget.Memory(
+            foreground=foreground,
+            background=background,
+            mouse_callbacks={"Button1": lambda: qtile.cmd_spawn(myTerm + " -e htop")},
+            fmt="Mem: {}",
+            padding=5,
+        )
+    return widget.TextBox(text="Mem: N/A", foreground=foreground, background=background, padding=5)
+
+
+def build_thermal_widget(foreground, background):
+    if shutil.which("sensors"):
+        try:
+            return widget.ThermalSensor(
+                foreground=foreground,
+                background=background,
+                threshold=90,
+                fmt="Temp: {}",
+                padding=5,
+            )
+        except Exception as err:
+            logger.warning("ThermalSensor unavailable: %s", err)
+    return widget.TextBox(text="Temp: N/A", foreground=foreground, background=background, padding=5)
+
 
 # Wayland helpers
 def build_tray_widget(background):
@@ -484,21 +552,9 @@ def init_widgets_list(visible_groups, include_systray=True):
 
         # Right side status with powerline separators
         powerline(colors[0], colors[3]),
-        widget.Net(
-            interface="wlp6s0",
-            format="Net: {down} ↓↑ {up}",
-            foreground=colors[1],
-            background=colors[3],
-            padding=5,
-        ),
+        build_net_widget(colors[1], colors[3]),
         powerline(colors[3], colors[4]),
-        widget.ThermalSensor(
-            foreground=colors[1],
-            background=colors[4],
-            threshold=90,
-            fmt="Temp: {}",
-            padding=5,
-        ),
+        build_thermal_widget(colors[1], colors[4]),
         powerline(colors[4], colors[5]),
         widget.CheckUpdates(
             update_interval=1800,
@@ -516,15 +572,7 @@ def init_widgets_list(visible_groups, include_systray=True):
             background=colors[5],
         ),
         powerline(colors[5], colors[6]),
-        widget.Memory(
-            foreground=colors[1],
-            background=colors[6],
-            mouse_callbacks={
-                "Button1": lambda: qtile.cmd_spawn(myTerm + " -e htop")
-            },
-            fmt="Mem: {}",
-            padding=5,
-        ),
+        build_memory_widget(colors[1], colors[6]),
         powerline(colors[6], colors[7]),
         widget.Volume(
             foreground=colors[1],

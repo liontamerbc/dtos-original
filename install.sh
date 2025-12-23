@@ -170,12 +170,13 @@ run_step "Updating system (pacman -Syu)..." sudo pacman -Syu --noconfirm
 
 core_pkgs=(
     xorg-server xorg-xinit xorg-xrandr xorg-xsetroot xorg-xprop
-    alacritty thunar firefox
+    alacritty xterm thunar firefox
     rofi dmenu
     picom starship
     feh sxiv xwallpaper
     git fzf wget curl unzip
     python-psutil lm_sensors
+    spice-vdagent
     noto-fonts ttf-dejavu ttf-liberation ttf-ubuntu-font-family
 )
 
@@ -206,6 +207,20 @@ run_step "Installing wallpaper tools (sxiv, xwallpaper)..." \
 
 run_step "Installing base-devel (needed for building paru/AUR packages)..." \
     sudo pacman -S --needed --noconfirm base-devel
+
+# ---------------------------------------------------------------------------
+# Ensure ~/.local/bin is on PATH (dmscripts, dm-run, etc.)
+# ---------------------------------------------------------------------------
+
+for rc in "$HOME/.profile" "$HOME/.bashrc"; do
+    if [ -f "$rc" ]; then
+        if ! grep -q 'HOME/.local/bin' "$rc" 2>/dev/null; then
+            printf '\n# Ensure local bin is on PATH\nexport PATH="$HOME/.local/bin:$PATH"\n' >>"$rc"
+        fi
+    else
+        printf '#!/bin/sh\n# Ensure local bin is on PATH\nexport PATH="$HOME/.local/bin:$PATH"\n' >"$rc"
+    fi
+done
 
 # ---------------------------------------------------------------------------
 # Paru
