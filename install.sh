@@ -175,6 +175,7 @@ core_pkgs=(
     picom starship
     feh sxiv xwallpaper
     git fzf wget curl unzip
+    python-psutil lm_sensors
     noto-fonts ttf-dejavu ttf-liberation ttf-ubuntu-font-family
 )
 
