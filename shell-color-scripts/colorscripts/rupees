@@ -7,11 +7,11 @@ initializeANSI()
   Bf="${esc}[30m";   rf="${esc}[31m";    gf="${esc}[32m"
   yf="${esc}[33m"   bf="${esc}[34m";   pf="${esc}[35m"
   cf="${esc}[36m";    wf="${esc}[37m"
-  
+
   Bfbright="${esc}[90m";   rfbright="${esc}[91m";    gfbright="${esc}[92m"
   yfbright="${esc}[93m"   bfbright="${esc}[94m";   pfbright="${esc}[95m"
   cfbright="${esc}[96m";    wfbright="${esc}[97m"
-  
+
   Bb="${esc}[40m";   rb="${esc}[41m";    gb="${esc}[42m"
   yb="${esc}[43m"   bb="${esc}[44m";   pb="${esc}[45m"
   cb="${esc}[46m";    wb="${esc}[47m"
@@ -38,7 +38,7 @@ cat << EOF
                ${Bf}██${yf}████████${ON}${yfbright}██${OFF}${yf}████${Bf}██               ${Bf}██${gf}${ON}${gfbright}████${OFF}${gf}██████${Bf}██${gf}████${Bf}██    ${Bf}██${bf}${ON}${bfbright}████${OFF}${bf}██████${Bf}██${bf}████${Bf}██    ${Bf}██${rf}${ON}${rfbright}████${OFF}${rf}██████${Bf}██${rf}████${Bf}██    ${Bf}██${pf}${ON}${pfbright}████${OFF}${pf}██████${Bf}██${pf}████${Bf}██    ${Bf}██${cf}${ON}${cfbright}████${OFF}${cf}██████${Bf}██${cf}████${Bf}██
              ${Bf}██████████████████████             ${Bf}██${gf}${ON}${gfbright}████${OFF}${gf}██████${Bf}██${gf}████${Bf}██    ${Bf}██${bf}${ON}${bfbright}████${OFF}${bf}██████${Bf}██${bf}████${Bf}██    ${Bf}██${rf}${ON}${rfbright}████${OFF}${rf}██████${Bf}██${rf}████${Bf}██    ${Bf}██${pf}${ON}${pfbright}████${OFF}${pf}██████${Bf}██${pf}████${Bf}██    ${Bf}██${cf}${ON}${cfbright}████${OFF}${cf}██████${Bf}██${cf}████${Bf}██
            ${Bf}██${yf}██${Bf}██              ██${yf}██${Bf}██           ${Bf}██${gf}${ON}${gfbright}████${OFF}${gf}██████${Bf}██${gf}████${Bf}██    ${Bf}██${bf}${ON}${bfbright}████${OFF}${bf}██████${Bf}██${bf}████${Bf}██    ${Bf}██${rf}${ON}${rfbright}████${OFF}${rf}██████${Bf}██${rf}████${Bf}██    ${Bf}██${pf}${ON}${pfbright}████${OFF}${pf}██████${Bf}██${pf}████${Bf}██    ${Bf}██${cf}${ON}${cfbright}████${OFF}${cf}██████${Bf}██${cf}████${Bf}██
-         ${Bf}██${yf}██████${Bf}██          ██${yf}██████${Bf}██         ${Bf}██${gf}${ON}${gfbright}████${OFF}${gf}██████${Bf}██${gf}████${Bf}██    ${Bf}██${bf}${ON}${bfbright}████${OFF}${bf}██████${Bf}██${bf}████${Bf}██    ${Bf}██${rf}${ON}${rfbright}████${OFF}${rf}██████${Bf}██${rf}████${Bf}██    ${Bf}██${pf}${ON}${pfbright}████${OFF}${pf}██████${Bf}██${pf}████${Bf}██    ${Bf}██${cf}${ON}${cfbright}████${OFF}${cf}██████${Bf}██${cf}████${Bf}██   
+         ${Bf}██${yf}██████${Bf}██          ██${yf}██████${Bf}██         ${Bf}██${gf}${ON}${gfbright}████${OFF}${gf}██████${Bf}██${gf}████${Bf}██    ${Bf}██${bf}${ON}${bfbright}████${OFF}${bf}██████${Bf}██${bf}████${Bf}██    ${Bf}██${rf}${ON}${rfbright}████${OFF}${rf}██████${Bf}██${rf}████${Bf}██    ${Bf}██${pf}${ON}${pfbright}████${OFF}${pf}██████${Bf}██${pf}████${Bf}██    ${Bf}██${cf}${ON}${cfbright}████${OFF}${cf}██████${Bf}██${cf}████${Bf}██
          ${Bf}██${yf}██████${Bf}██          ██${yf}${ON}${yfbright}██${OFF}${yf}████${Bf}██         ${Bf}██${gf}${ON}${gfbright}██${OFF}${gf}██${ON}${gfbright}██${OFF}${gf}████${Bf}██${gf}████${Bf}██    ${Bf}██${bf}${ON}${bfbright}██${OFF}${bf}██${ON}${bfbright}██${OFF}${bf}████${Bf}██${bf}████${Bf}██    ${Bf}██${rf}${ON}${rfbright}██${OFF}${rf}██${ON}${rfbright}██${OFF}${rf}████${Bf}██${rf}████${Bf}██    ${Bf}██${pf}${ON}${pfbright}██${OFF}${pf}██${ON}${pfbright}██${OFF}${pf}████${Bf}██${pf}████${Bf}██    ${Bf}██${cf}${ON}${cfbright}██${OFF}${cf}██${ON}${cfbright}██${OFF}${cf}████${Bf}██${cf}████${Bf}██
        ${Bf}██${yf}██████████${Bf}██      ██${yf}██${ON}${yfbright}████${OFF}${yf}████${Bf}██       ${Bf}██${gf}██████${ON}${gfbright}██${OFF}${gf}${Bf}██${gf}██${Bf}██${gf}██${Bf}██    ${Bf}██${bf}██████${ON}${bfbright}██${OFF}${bf}${Bf}██${bf}██${Bf}██${bf}██${Bf}██    ${Bf}██${rf}██████${ON}${rfbright}██${OFF}${rf}${Bf}██${rf}██${Bf}██${rf}██${Bf}██    ${Bf}██${pf}██████${ON}${pfbright}██${OFF}${pf}${Bf}██${pf}██${Bf}██${pf}██${Bf}██    ${Bf}██${cf}██████${ON}${cfbright}██${OFF}${cf}${Bf}██${cf}██${Bf}██${cf}██${Bf}██
        ${Bf}██${yf}${ON}${yfbright}██${OFF}${yf}████████${Bf}██      ██${yf}████${ON}${yfbright}██${OFF}${yf}████${Bf}██         ${Bf}██${gf}████████████${Bf}██        ${Bf}██${bf}████████████${Bf}██        ${Bf}██${rf}████████████${Bf}██        ${Bf}██${pf}████████████${Bf}██        ${Bf}██${cf}████████████${Bf}██

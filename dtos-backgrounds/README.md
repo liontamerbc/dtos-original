@@ -1,8 +1,8 @@
 # DT's Wallpaper Collection
 
-![Screenshot of my desktop](https://gitlab.com/dwt1/dotfiles/raw/master/.screenshots/dotfiles10.png) 
+![Screenshot of my desktop](https://gitlab.com/dwt1/dotfiles/raw/master/.screenshots/dotfiles10.png)
 
-Possibly the most common question I get from viewers of my [Youtube channel](https://www.youtube.com/c/DistroTube) is "Hey, can you give me a link to your wallpaper?"  Well, I have collected these wallpapers over a number of years and have no idea where I got most of them.  I have also renamed them all (giving them a number) so I don't even have their original filename.  So I am uploading my entire wallpaper directory for those that want/need them. 
+Possibly the most common question I get from viewers of my [Youtube channel](https://www.youtube.com/c/DistroTube) is "Hey, can you give me a link to your wallpaper?"  Well, I have collected these wallpapers over a number of years and have no idea where I got most of them.  I have also renamed them all (giving them a number) so I don't even have their original filename.  So I am uploading my entire wallpaper directory for those that want/need them.
 
 ## Where Did I Get These?
 

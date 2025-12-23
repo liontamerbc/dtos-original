@@ -1,7 +1,7 @@
 
 
 
-stages: 
+stages:
   - test
 
 shellcheck:

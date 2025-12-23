@@ -4,7 +4,7 @@ DMENU="dmenu -i -l 20 -sb '#ff79c6' -p"
 #
 # Script name: auto
 # Description: Add and remove programs to autostart directory.
-# Dependencies: fzf 
+# Dependencies: fzf
 # GitLab: https://www.gitlab.com/dwt1/fzscripts
 # License: https://www.gitlab.com/dwt1/fzscripts
 # Contributors: Derek Taylor
@@ -45,7 +45,7 @@ done
 listauto() {
     selected_file=$(${MENU} "Programs currently in autostart directory: " < <(printf "%s\n" "${autostart_files[@]}"))
     if [[ -n "$selected_file" ]]; then
-     main 
+     main
     fi
     tput setaf 6 bold
     printf "%s\n" "Programs currently in autostart directory:"
@@ -102,8 +102,8 @@ rmauto() {
 
 main() {
     declare -a options=(
-        "Add a program to autostart" 
-        "Remove a program from autostart" 
+        "Add a program to autostart"
+        "Remove a program from autostart"
         "List contents of autostart directory"
         "Quit")
     #menu=$(${MENU} "What do you want to do? " < <(printf "%s\n" "${options[@]}"))

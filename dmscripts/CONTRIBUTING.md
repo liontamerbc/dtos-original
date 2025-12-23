@@ -24,7 +24,7 @@ You are expected to have these programs installed on the system:
 This project also expects a few other things of you:
 
 + Test the scripts - We cannot stress this enough, test the scripts. They should at least work on Archlinux, in X11, with bash and with a vanilla dmenu installation.
-+ Write patches under free licenses - We assume all new code is under GNU GPLv3 or later and any modifications to existing code **must** be under GNU GPLv3 or later. If any script you write is NOT a GNU GPLv3 or later script, it must be explicitly said and it must be released under a license compatible with GNU GPLv3 or later. 
++ Write patches under free licenses - We assume all new code is under GNU GPLv3 or later and any modifications to existing code **must** be under GNU GPLv3 or later. If any script you write is NOT a GNU GPLv3 or later script, it must be explicitly said and it must be released under a license compatible with GNU GPLv3 or later.
 + Patches must have a license - Please state the license of the patch (no license =/= free software). This only applies to new code as old code is already protected by GNU GPLv3 or later.
 + Look at other issues first - While we love new scripts, we love fixing bugs even more. If you can contribute to an existing issue that would be significantly better than adding a new script.
 
@@ -36,7 +36,7 @@ You can generate boilerplate by using ./dm-template and selecting the contrib op
 
 It is important to follow the style of the template above.  Especially important is including in the comments the lines that begin with "# Description:" and "# Dependencies" since these are used to display help information when the script is run with the '-h' option.
 
-In the testing phase of the script writing process, run the command ```shellcheck -x your-script``` and attempt to fix any errors that come up. 
+In the testing phase of the script writing process, run the command ```shellcheck -x your-script``` and attempt to fix any errors that come up.
 
 Occasionally however, we want the shell script to behave in a way that shellcheck doesn't like. In that case, leave a command in this format:
 
@@ -55,7 +55,7 @@ Finally we expect you to update the existing documentation if you can do that. T
 
 Write clean commit messages explaining what you have done in one sentence.
 
-(Notes: -a automatically updates any modified files, use git add to add new files) 
+(Notes: -a automatically updates any modified files, use git add to add new files)
 
 ```bash
 $ git commit -am "your message here"
@@ -63,12 +63,12 @@ $ git commit -am "your message here"
 
 Patches should ideally try to focus on one goal if possible. This is to avoid conflicts.
 
-After committing push and then make a merge request explaining why your patch should be merged into upsteam. 
+After committing push and then make a merge request explaining why your patch should be merged into upsteam.
 
 (Notes: advanced use cases may require separate flags)
 
 ```bash
-$ git push 
+$ git push
 ```
 
 Here is where you put all of the details. Explain what has been changed and why it has been changed.

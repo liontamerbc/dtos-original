@@ -69,12 +69,12 @@ generate_contrib() {
     contributor=$(echo "" | ${MENU} "Who is the author of the script?")
     printf "#!/usr/bin/env bash
 #
-# Script name: %s 
-# Description: %s 
-# Dependencies: %s 
+# Script name: %s
+# Description: %s
+# Dependencies: %s
 # GitLab: https://www.gitlab.com/dwt1/dmscripts
 # License: https://www.gitlab.com/dwt1/dmscripts/LICENSE
-# Contributors: %s 
+# Contributors: %s
 
 # Set with the flags \"-e\", \"-u\",\"-o pipefail\" cause the script to fail
 # if certain things happen, which is a good thing.  Otherwise, we can

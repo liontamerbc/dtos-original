@@ -19,7 +19,7 @@ Alternately, you could also install shell-color-scripts from the AUR using an AU
 
 	yay -S shell-color-scripts
 
-# Installing shell-color-scripts on NixOS or nixpkgs (unstable only) 
+# Installing shell-color-scripts on NixOS or nixpkgs (unstable only)
 
 Shell-color-scripts is packaged for nixpkgs (unstable only). Although manpages and shell completions are not packaged *yet*
 
@@ -27,7 +27,7 @@ Shell-color-scripts is packaged for nixpkgs (unstable only). Although manpages a
 
     nix-env -iA nixos.dt-shell-color-scripts
 ##### For nixpkgs users (unstable only)
-    
+
     nix-env -iA nixpkgs.dt-shell-color-scripts
 
 # Installing shell-color-scripts on Fedora

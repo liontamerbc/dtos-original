@@ -4,7 +4,7 @@
 #  ┃┳┛┃━┫┃┃┃┃┃━┃┃ ┃┃┃┃
 #  ┃┗┛┛ ┃┃┃┗┛┻━┛┛━┛┗┻┛
 #     ┳━┓┳ ┓┳┏ ┳━┓
-#     ┃━┛┃ ┃┣┻┓┣━ 
+#     ┃━┛┃ ┃┣┻┓┣━
 #     ┇  ┗━┛┃ ┛┻━┛
 #    ┓━┓┳┏ ┳ ┓┳  ┳
 #    ┗━┓┣┻┓┃ ┃┃  ┃
@@ -71,4 +71,3 @@ cat << 'EOF'
     [1;91mXXXX[0;31mXXXX[1;93mXXXX[0;33mXXXX[1;95mXXXX[0;35mXXXX[1;92mXXXX[0;32mXXXX[1;94mXXXX[0;34mXXXX[1;97mXXXX[0;37mXXXX
     [1;91mXXXX[0;31mXXXX[1;93mXXXX[0;33mXXXX[1;95mXXXX[0;35mXXXX[1;92mXXXX[0;32mXXXX[1;94mXXXX[0;34mXXXX[1;97mXXXX[0;37mXXXX
 EOF
- 

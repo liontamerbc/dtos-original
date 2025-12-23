@@ -43,7 +43,7 @@ Bad example: "dm-bookman gives me an error on line 53..." - This is the opposite
 
 + Name of distro - Try to name your distro or even better your parent distro. This can help us conclude if it's a distro problem or a script problem.
 + Has your script been modified? - We need to know as it becomes harder to tell if your script has been modified or not.
-+ Give us your configuration - If your config has been modified, please give us the entire config. 
++ Give us your configuration - If your config has been modified, please give us the entire config.
 
 You can figure that out by running the following:
 
@@ -71,9 +71,9 @@ Copy the entire line and send it in your report.
 
 + Steps to reproduce the bug
 
-This could be as simple as "run the program" or as complex as running the program and diving deep into a submenu of the application. Be descriptive when applicable. 
+This could be as simple as "run the program" or as complex as running the program and diving deep into a submenu of the application. Be descriptive when applicable.
 
-+ Copy any error messages 
++ Copy any error messages
 
 This is where you would copy the error message from earlier.
 
@@ -97,7 +97,7 @@ Steps to reproduce:
 1. run dm-foobar
 2. select barfoo
 
-Error messages: 
+Error messages:
 
 "./dm-foobar: line 53: dm-foobar fails to launch barfoo: unrecognized variable fobar"
 

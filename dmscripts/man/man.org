@@ -34,7 +34,7 @@ Allows you to switch between predefined equalizer profiles easily.
 Get IP of interface or external IP.
 ** dm-kill
 Simple process killer, find and kill misbehaving processes.
-** dm-lights 
+** dm-lights
 A tool to manage your backlights.
 ** dm-logout
 Simple logout menu, choose to lock, shutdown, reboot or logout of your computer.
@@ -85,7 +85,7 @@ The first local config file is found here, this is free to modify and it is the 
 ** Using the repo configuration
 The repo can be used as is and provides a local config file. You can change it but it's change at your own risk. If you want to update the repo, for example, there may be merge conflicts. And when commiting, we expect a default config unless you are intentionally making changes to fix a bug or make an update and not to simply change something in a way you prefer.
 ** Using global variables
-While we don't recommend it, you can choose to set some variables in other places such as the bashrc or the /etc/profile file. 
+While we don't recommend it, you can choose to set some variables in other places such as the bashrc or the /etc/profile file.
 ** Modifying the source
 Finally, you can modify the source code to add more files to modify or to customize dmscripts to your heart's content, please report any bugs along the way however. Confirm it on an unmodified version first and read the issues.
 
@@ -95,7 +95,7 @@ DMENU is the default variable used in dmscripts, we expect all scripts to use DM
 ** Other variables
 A lot of the other variables are simply program names or directories and are not worth going into further details.
 ** Lists
-Some our config is done in a list like format. There are two syntaxes, -A and -a. 
+Some our config is done in a list like format. There are two syntaxes, -A and -a.
 
 -A uses the format of:
 #+begin_example
@@ -110,5 +110,3 @@ variable=(
 ...
 )
 #+end_example
-
-

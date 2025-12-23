@@ -200,6 +200,13 @@ run_step "Installing wallpaper tools (sxiv, xwallpaper)..." \
     sudo pacman -S --needed --noconfirm sxiv xwallpaper
 
 # ---------------------------------------------------------------------------
+# Build tools (required for paru/AUR packages)
+# ---------------------------------------------------------------------------
+
+run_step "Installing base-devel (needed for building paru/AUR packages)..." \
+    sudo pacman -S --needed --noconfirm base-devel
+
+# ---------------------------------------------------------------------------
 # Paru
 # ---------------------------------------------------------------------------
 
