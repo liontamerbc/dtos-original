@@ -615,7 +615,7 @@ def init_widgets_list(visible_groups, include_systray=True):
         # Right side status with powerline separators
         powerline(colors[0], colors[3]),
         widget.Net(
-            interface="wlp6s0",
+            interface=None,  # auto-select active interface(s) to avoid missing NIC errors
             format="Net: {down} ↓↑ {up}",
             foreground=colors[1],
             background=colors[3],
