@@ -1,41 +1,40 @@
 # -*- coding: utf-8 -*-
+import json
 import os
 import socket
 import subprocess
-import shutil
+import urllib.request
+from pathlib import Path
+
+os.environ["PATH"] = os.pathsep.join([
+    os.environ.get("PATH", ""),
+    os.path.expanduser("~/.local/bin"),
+])
 
 from libqtile import qtile, layout, bar, widget, hook
 from libqtile.config import Click, Drag, Group, KeyChord, Key, Match, Screen
-from libqtile.log_utils import logger
 from libqtile.lazy import lazy
+from libqtile.log_utils import logger
 from typing import List  # noqa: F401
 
 try:
-    import psutil  # noqa: F401
-    HAS_PSUTIL = True
-except Exception:
-    HAS_PSUTIL = False
-
-IS_WAYLAND = os.environ.get("WAYLAND_DISPLAY") is not None
-
-try:
+    # Wayland-only: used to set keyboard layout without setxkbmap
     from libqtile.backend.wayland import InputConfig
 except Exception:
     InputConfig = None
 
-try:
-    from qtile_extras.widget import StatusNotifier
-except Exception:
-    StatusNotifier = None
-
-ENABLE_STATUS_NOTIFIER = True  # Toggle Wayland tray; keep on now that deps are installed
-
 # ---------- Startup hooks ----------
 
-# Set keyboard layout on every startup (skip the X11 command when on Wayland)
+def is_wayland():
+    try:
+        return qtile.core.name == "wayland"
+    except Exception:
+        return bool(os.environ.get("WAYLAND_DISPLAY"))
+
+# Set keyboard layout on every startup
 @hook.subscribe.startup
 def startup():
-    if not IS_WAYLAND:
+    if not is_wayland():
         os.system("setxkbmap gb")
 
 # Run autostart script once (your dtos autostart.sh)
@@ -48,15 +47,24 @@ def start_once():
 # ---------- Basic settings ----------
 
 mod = "mod4"              # SUPER/WIN
-myTerm = "alacritty" if shutil.which("alacritty") else "xterm"
+myTerm = "alacritty"
 myBrowser = "firefox"
 myVirt = "virt-manager"
 myOffice = "libreoffice"
 myPrime = "primevideo"
 myNetflix = "netflix"
-mySpotify = "spotify"
+myYouTube = "youtube"
+myYTMusic = "youtube-music-desktop-app"
 myReddit = "reddit-desktop-bin"
 myChat = "whatsapp-for-linux"
+
+# Wayland input rules (ignored on X11). Keeps keyboard layout in sync without setxkbmap.
+wl_input_rules = {}
+if InputConfig is not None:
+    wl_input_rules = {"type:keyboard": InputConfig(kb_layout="gb")}
+
+# Toggle Wayland tray (StatusNotifier). Enabled now that dbus-fast is installed.
+ENABLE_STATUS_NOTIFIER = True
 
 
 # ---------- Helper window move functions ----------
@@ -92,6 +100,60 @@ def switch_screens(qtile):
     group = qtile.screens[i - 1].group
     qtile.current_screen.set_group(group)
 
+
+def total_updates_count():
+    """Count repo updates (pacman/Pamac) plus AUR updates (yay/paru)."""
+    def _count(cmd):
+        try:
+            result = subprocess.run(
+                cmd,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+        except FileNotFoundError:
+            return None
+        lines = []
+        for line in result.stdout.splitlines():
+            stripped = line.strip()
+            # Only count lines that look like package entries, skip pacman candy art.
+            if not stripped or not stripped[0].isalnum():
+                continue
+            lines.append(stripped)
+        return len(lines)
+
+    repo = _count(["checkupdates"])
+    if repo is None:
+        repo = _count(["pamac", "checkupdates", "--no-aur", "--quiet"])
+    repo = repo or 0
+
+    aur = _count(["yay", "-Qua"])
+    if aur is None:
+        aur = _count(["paru", "-Qua"])
+    aur = aur or 0
+
+    return str(repo + aur)
+
+
+def brimscombe_temp():
+    """Fetch current temp with one decimal for Brimscombe via Open-Meteo."""
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        "?latitude=51.7265&longitude=-2.1940"
+        "&current=temperature_2m"
+        "&timezone=Europe/London"
+    )
+    try:
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            temp = data.get("current", {}).get("temperature_2m")
+            if temp is None:
+                return "Brimscombe -- C"
+            return f"Brimscombe {float(temp):.1f} C"
+    except Exception:
+        return "Brimscombe -- C"
+
 # Workspace helpers: per-screen group names and focus helpers
 BASE_GROUPS = ["DEV", "WWW", "SYS", "DOC", "VBOX", "CHAT", "MUS", "VID", "GFX"]
 # Use letter tags to keep group names unique per screen without showing numbers.
@@ -107,7 +169,7 @@ def focus_group_on_screen(base, screen_index=None):
     def _inner(qtile):
         target_screen = screen_index if screen_index is not None else qtile.current_screen.index
         name = group_name(base, target_screen)
-        qtile.cmd_to_screen(target_screen)
+        qtile.to_screen(target_screen)
         qtile.groups_map[name].toscreen(target_screen)
 
     return _inner
@@ -123,80 +185,23 @@ def move_window_to_group(base, screen_index=None):
 
     return _inner
 
-
-def detect_primary_interface():
-    """Return a best-guess network interface (non-loopback) or None."""
-    try:
-        entries = [e.name for e in os.scandir("/sys/class/net") if e.is_dir() and e.name != "lo"]
-    except Exception:
-        entries = []
-
-    if not entries:
-        return None
-
-    # Prefer common prefixes; fallback to the first sorted entry.
-    entries = sorted(entries)
-    for prefix in ("en", "eth", "wl", "wlp"):
-        for name in entries:
-            if name.startswith(prefix):
-                return name
-    return entries[0]
-
-
-def build_net_widget(foreground, background):
-    iface = detect_primary_interface()
-    if HAS_PSUTIL and iface:
-        return widget.Net(
-            interface=iface,
-            format="Net: {down} ↓↑ {up}",
-            foreground=foreground,
-            background=background,
-            padding=5,
-        )
-    text = "Net: N/A" if iface else "Net: no iface"
-    return widget.TextBox(text=text, foreground=foreground, background=background, padding=5)
-
-
-def build_memory_widget(foreground, background):
-    if HAS_PSUTIL:
-        return widget.Memory(
-            foreground=foreground,
-            background=background,
-            mouse_callbacks={"Button1": lambda: qtile.cmd_spawn(myTerm + " -e htop")},
-            fmt="Mem: {}",
-            padding=5,
-        )
-    return widget.TextBox(text="Mem: N/A", foreground=foreground, background=background, padding=5)
-
-
-def build_thermal_widget(foreground, background):
-    if shutil.which("sensors"):
-        try:
-            return widget.ThermalSensor(
-                foreground=foreground,
-                background=background,
-                threshold=90,
-                fmt="Temp: {}",
-                padding=5,
-            )
-        except Exception as err:
-            logger.warning("ThermalSensor unavailable: %s", err)
-    return widget.TextBox(text="Temp: N/A", foreground=foreground, background=background, padding=5)
-
-
-# Wayland helpers
+# Systray helper
 def build_tray_widget(background):
     """Return a tray widget or None when unavailable to avoid error placeholders."""
-    if IS_WAYLAND:
-        if not ENABLE_STATUS_NOTIFIER or StatusNotifier is None:
+    on_wayland = is_wayland()
+    if on_wayland:
+        if not ENABLE_STATUS_NOTIFIER:
             return None
+        if not hasattr(widget, "StatusNotifier"):
+            return None
+        # Requires dbus-next; skip cleanly if missing.
         try:
-            import dbus_fast  # noqa: F401
+            import dbus_next  # noqa: F401
         except Exception as err:
-            logger.warning("StatusNotifier skipped (dbus-fast missing): %s", err)
+            logger.warning("StatusNotifier skipped (dbus-next missing): %s", err)
             return None
         try:
-            return StatusNotifier(background=background, padding=5)
+            return widget.StatusNotifier(background=background, padding=5)
         except Exception as err:
             logger.warning("StatusNotifier unavailable: %s", err)
             return None
@@ -204,7 +209,7 @@ def build_tray_widget(background):
         return widget.Systray(background=background, padding=5)
 
 # Qtile cannot restart under Wayland; reload the config there instead.
-restart_binding = lazy.reload_config() if IS_WAYLAND else lazy.restart()
+restart_binding = lazy.reload_config() if is_wayland() else lazy.restart()
 
 # ---------- Keybindings ----------
 
@@ -219,7 +224,10 @@ keys = [
     Key([mod], "q", lazy.window.kill(), desc="Kill active window"),
 
     # My app keybindings
-    Key([mod], "Return", lazy.spawn(myTerm), desc="Launch terminal"),
+    Key([mod], "Return",
+        lazy.function(focus_group_on_screen("DEV")),
+        lazy.spawn(myTerm),
+        desc="Launch terminal (DEV workspace)"),
     Key([mod], "b",
         lazy.function(focus_group_on_screen("WWW")),
         lazy.spawn(myBrowser),
@@ -236,7 +244,7 @@ keys = [
         lazy.function(focus_group_on_screen("VID")),
         lazy.spawn(myPrime),
         desc="Prime Video"),
-    Key([mod], "n",
+    Key([mod, "shift"], "n",
         lazy.function(focus_group_on_screen("VID")),
         lazy.spawn(myNetflix),
         desc="Netflix"),
@@ -244,14 +252,18 @@ keys = [
         lazy.function(focus_group_on_screen("CHAT")),
         lazy.spawn(myChat),
         desc="WhatsApp"),
-    Key([mod], "s",
+    Key([mod], "m",
         lazy.function(focus_group_on_screen("MUS")),
-        lazy.spawn(mySpotify),
-        desc="Spotify"),
+        lazy.spawn(myYTMusic),
+        desc="YouTube Music"),
+    Key([mod], "y",
+        lazy.function(focus_group_on_screen("VID")),
+        lazy.spawn(myYouTube),
+        desc="YouTube"),
 
-    # Focus specific monitor (0,1,2)
+    # Focus specific monitor (0,1,2). Use Ctrl+Super+e to keep the Super+e chord free.
     Key([mod], "w", lazy.to_screen(0), desc="Focus monitor 1"),
-    Key([mod], "e", lazy.to_screen(1), desc="Focus monitor 2"),
+    Key([mod, "control"], "e", lazy.to_screen(1), desc="Focus monitor 2"),
     Key([mod], "r", lazy.to_screen(2), desc="Focus monitor 3"),
 
     # Cycle monitors
@@ -298,7 +310,7 @@ keys = [
     Key([mod], "l",
         lazy.layout.grow(), lazy.layout.increase_nmaster(),
         desc="Grow window / increase master count"),
-    Key([mod], "m", lazy.layout.maximize(), desc="Maximize / restore window"),
+    Key([mod, "shift"], "m", lazy.layout.maximize(), desc="Maximize / restore window"),
     Key([mod], "n", lazy.layout.normalize(), desc="Normalize window sizes"),
     Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc="Toggle floating"),
     Key([mod], "f", lazy.window.toggle_fullscreen(), desc="Toggle fullscreen"),
@@ -372,7 +384,7 @@ def build_screen_groups(screen_index):
         Group(
             name=group_name(base, screen_index),
             label=base,
-            layout="floating" if base == "GFX" else "monadtall",
+            layout="floating" if base == "GFX" else "bsp",
         )
         for base in BASE_GROUPS
     ]
@@ -396,18 +408,83 @@ for index, base in enumerate(BASE_GROUPS, start=1):
     ])
 
 
+# After restart, force BSP as the default layout (GFX stays floating)
+@hook.subscribe.startup_complete
+def set_default_layouts():
+    for grp in qtile.groups_map.values():
+        base = grp.name.split("-")[0]
+        if base == "GFX":
+            grp.setlayout("floating")
+        else:
+            grp.setlayout("bsp")
+
+
+# ---------- Colors ----------
+
+FALLBACK_COLORS = [
+    ["#282c34", "#282c34"],
+    ["#1c1f24", "#1c1f24"],
+    ["#dfdfdf", "#dfdfdf"],
+    ["#ff6c6b", "#ff6c6b"],
+    ["#98be65", "#98be65"],
+    ["#da8548", "#da8548"],
+    ["#51afef", "#51afef"],
+    ["#c678dd", "#c678dd"],
+    ["#46d9ff", "#46d9ff"],
+    ["#a9a1e1", "#a9a1e1"],
+]
+
+
+def load_wal_colors():
+    """Pull colors from pywal cache; fall back to a static palette."""
+    cache_file = Path.home() / ".cache" / "wal" / "colors.json"
+    if not cache_file.exists():
+        return FALLBACK_COLORS
+
+    try:
+        with cache_file.open() as f:
+            wal = json.load(f)
+        palette = wal.get("colors", {})
+        special = wal.get("special", {})
+
+        def pick(key, fallback):
+            return palette.get(key, fallback)
+
+        background = special.get("background", pick("color0", FALLBACK_COLORS[0][0]))
+        foreground = special.get("foreground", pick("color7", FALLBACK_COLORS[2][0]))
+
+        return [
+            [background, background],
+            [pick("color0", FALLBACK_COLORS[1][0])] * 2,
+            [foreground, foreground],
+            [pick("color1", FALLBACK_COLORS[3][0])] * 2,
+            [pick("color2", FALLBACK_COLORS[4][0])] * 2,
+            [pick("color3", FALLBACK_COLORS[5][0])] * 2,
+            [pick("color4", FALLBACK_COLORS[6][0])] * 2,
+            [pick("color5", FALLBACK_COLORS[7][0])] * 2,
+            [pick("color6", FALLBACK_COLORS[8][0])] * 2,
+            [pick("color7", FALLBACK_COLORS[9][0])] * 2,
+        ]
+    except Exception as err:
+        logger.warning("Falling back to default colors (wal load failed): %s", err)
+        return FALLBACK_COLORS
+
+
+colors = load_wal_colors()
+
+
 # ---------- Layouts ----------
 
 layout_theme = dict(
     border_width=2,
     margin=8,
-    border_focus="e1acff",
-    border_normal="1D2330",
+    border_focus=colors[6][0],
+    border_normal=colors[1][0],
 )
 
 layouts = [
-    layout.MonadWide(**layout_theme),
     layout.Bsp(**layout_theme),
+    layout.MonadWide(**layout_theme),
     layout.Columns(**layout_theme),
     layout.RatioTile(**layout_theme),
     layout.Tile(shift_windows=True, **layout_theme),
@@ -439,21 +516,6 @@ layouts = [
     layout.Floating(**layout_theme),
 ]
 
-
-# ---------- Colors ----------
-
-colors = [
-    ["#282c34", "#282c34"],
-    ["#1c1f24", "#1c1f24"],
-    ["#dfdfdf", "#dfdfdf"],
-    ["#ff6c6b", "#ff6c6b"],
-    ["#98be65", "#98be65"],
-    ["#da8548", "#da8548"],
-    ["#51afef", "#51afef"],
-    ["#c678dd", "#c678dd"],
-    ["#46d9ff", "#46d9ff"],
-    ["#a9a1e1", "#a9a1e1"],
-]
 
 prompt = "{0}@{1}: ".format(os.environ["USER"], socket.gethostname())
 
@@ -536,7 +598,7 @@ def init_widgets_list(visible_groups, include_systray=True):
         ),
     ]
 
-    # Qtile only supports one tray; use the Wayland notifier widget when possible
+    # Qtile only supports one systray; avoid adding it to every monitor
     if include_systray:
         tray = build_tray_widget(colors[0])
         if tray:
@@ -552,27 +614,45 @@ def init_widgets_list(visible_groups, include_systray=True):
 
         # Right side status with powerline separators
         powerline(colors[0], colors[3]),
-        build_net_widget(colors[1], colors[3]),
-        powerline(colors[3], colors[4]),
-        build_thermal_widget(colors[1], colors[4]),
-        powerline(colors[4], colors[5]),
-        widget.CheckUpdates(
-            update_interval=1800,
-            distro="Arch_checkupdates",
-            display_format="Updates: {updates} ",
+        widget.Net(
+            interface="wlp6s0",
+            format="Net: {down} ↓↑ {up}",
             foreground=colors[1],
-            colour_have_updates=colors[1],
-            colour_no_updates=colors[1],
+            background=colors[3],
+            padding=5,
+        ),
+        powerline(colors[3], colors[4]),
+        widget.GenPollText(
+            func=brimscombe_temp,
+            update_interval=900,
+            foreground=colors[1],
+            background=colors[4],
+            padding=5,
+        ),
+        powerline(colors[4], colors[5]),
+        widget.GenPollText(
+            update_interval=1800,
+            func=total_updates_count,
+            fmt="Updates: {} ",
+            foreground=colors[1],
+            background=colors[5],
             mouse_callbacks={
-                "Button1": lambda: qtile.cmd_spawn(
-                    myTerm + " -e sudo pacman -Syu"
-                )
+                "Button1": lambda: qtile.spawn(myTerm + " -e yay -Syu")
             },
             padding=5,
-            background=colors[5],
         ),
         powerline(colors[5], colors[6]),
-        build_memory_widget(colors[1], colors[6]),
+        widget.Memory(
+            foreground=colors[1],
+            background=colors[6],
+            mouse_callbacks={
+                "Button1": lambda: qtile.spawn(myTerm + " -e htop")
+            },
+            measure_mem="G",
+            format="{MemUsed:.1f}/{MemTotal:.1f}",
+            fmt="Mem: {}",
+            padding=5,
+        ),
         powerline(colors[6], colors[7]),
         widget.Volume(
             foreground=colors[1],
@@ -591,7 +671,7 @@ def init_widgets_list(visible_groups, include_systray=True):
         widget.Clock(
             foreground=colors[1],
             background=colors[9],
-            format="%A, %B %d - %H:%M ",
+            format="%A, %B %d - %H:%M:%S ",
         ),
     ]
 
@@ -655,10 +735,3 @@ reconfigure_screens = True
 auto_minimize = True
 
 wmname = "LG3D"
-
-# Wayland input configuration (keyboard layout)
-wl_input_rules = {}
-if IS_WAYLAND and InputConfig:
-    wl_input_rules = {
-        "type:keyboard": InputConfig(kb_layout="gb"),
-    }
