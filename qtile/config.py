@@ -3,6 +3,7 @@ import json
 import os
 import socket
 import subprocess
+import time
 import urllib.request
 from pathlib import Path
 
@@ -153,6 +154,64 @@ def brimscombe_temp():
             return f"Brimscombe {float(temp):.1f} C"
     except Exception:
         return "Brimscombe -- C"
+
+# ---------- Network widget helpers ----------
+# The stock widget.Net throws when a listed interface disappears (common in VMs),
+# then stops polling. Read totals ourselves and format safely.
+NET_STATE = {"ts": None, "rx": None, "tx": None}
+NET_DEV_PATH = Path("/proc/net/dev")
+
+
+def _read_net_totals(skip=("lo",)):
+    rx = tx = 0
+    try:
+        with NET_DEV_PATH.open() as f:
+            for line in f:
+                if ":" not in line:
+                    continue
+                name, data = map(str.strip, line.split(":", 1))
+                if name in skip:
+                    continue
+                fields = data.split()
+                if len(fields) < 9:
+                    continue
+                rx += int(fields[0])
+                tx += int(fields[8])
+    except Exception as err:
+        logger.warning("Net stats read failed: %s", err)
+        return None
+    return rx, tx
+
+
+def _human_rate(bytes_per_sec):
+    # Keep units small but readable
+    units = ["B", "KB", "MB", "GB", "TB"]
+    rate = float(bytes_per_sec)
+    for unit in units:
+        if rate < 1024.0 or unit == units[-1]:
+            return f"{rate:.1f}{unit}/s"
+        rate /= 1024.0
+
+
+def net_status():
+    now = time.monotonic()
+    totals = _read_net_totals()
+    if totals is None:
+        return "Net: --"
+
+    rx, tx = totals
+    last_ts = NET_STATE["ts"]
+    last_rx = NET_STATE["rx"]
+    last_tx = NET_STATE["tx"]
+    NET_STATE.update(ts=now, rx=rx, tx=tx)
+
+    if last_ts is None or last_rx is None or last_tx is None:
+        return "Net: init"
+
+    delta_t = max(now - last_ts, 1e-6)
+    down_rate = (rx - last_rx) / delta_t
+    up_rate = (tx - last_tx) / delta_t
+    return f"Net: {_human_rate(down_rate)} ↓↑ {_human_rate(up_rate)}"
 
 # Workspace helpers: per-screen group names and focus helpers
 BASE_GROUPS = ["DEV", "WWW", "SYS", "DOC", "VBOX", "CHAT", "MUS", "VID", "GFX"]
@@ -614,9 +673,9 @@ def init_widgets_list(visible_groups, include_systray=True):
 
         # Right side status with powerline separators
         powerline(colors[0], colors[3]),
-        widget.Net(
-            interface=None,  # auto-select active interface(s) to avoid missing NIC errors
-            format="Net: {down} ↓↑ {up}",
+        widget.GenPollText(
+            func=net_status,
+            update_interval=2,
             foreground=colors[1],
             background=colors[3],
             padding=5,
