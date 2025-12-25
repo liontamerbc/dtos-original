@@ -24,6 +24,16 @@
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PACMAN_BIN="${PACMAN_BIN:-/usr/bin/pacman}"
+if [ ! -x "$PACMAN_BIN" ]; then
+    PACMAN_BIN="$(command -v pacman || true)"
+fi
+if [ -z "$PACMAN_BIN" ]; then
+    echo "ERROR: pacman not found on PATH. This installer requires pacman."
+    exit 1
+fi
+INSTALL_LOG="${INSTALL_LOG:-/tmp/dtos-2025-install.log}"
+: >"$INSTALL_LOG"
 
 # ---------------------------------------------------------------------------
 # Safety checks
@@ -39,7 +49,7 @@ fi
 
 if ! command -v whiptail >/dev/null 2>&1; then
     echo "Installing 'libnewt' (whiptail)..."
-    sudo pacman -S --needed --noconfirm libnewt
+    sudo "$PACMAN_BIN" -S --needed --noconfirm libnewt
 fi
 
 # ---------------------------------------------------------------------------
@@ -162,7 +172,7 @@ fi
 # System update
 # ---------------------------------------------------------------------------
 
-run_step "Updating system (pacman -Syu)..." sudo pacman -Syu --noconfirm
+run_step "Updating system (pacman -Syu)..." sudo "$PACMAN_BIN" -Syu --noconfirm
 
 # ---------------------------------------------------------------------------
 # Core packages
@@ -192,7 +202,7 @@ if [ "$INSTALL_QTILE" = "y" ]; then
 fi
 
 run_step "Installing core packages (window managers + tools)..." \
-    sudo pacman -S --needed --noconfirm "${core_pkgs[@]}"
+    sudo "$PACMAN_BIN" -S --needed --noconfirm "${core_pkgs[@]}"
 
 # ---------------------------------------------------------------------------
 # Graphics drivers (Intel/AMD + virtual machines)
@@ -200,7 +210,7 @@ run_step "Installing core packages (window managers + tools)..." \
 
 # Ensure lspci is available for GPU detection
 if ! command -v lspci >/dev/null 2>&1; then
-    run_step "Installing pciutils (for GPU detection)..." sudo pacman -S --needed --noconfirm pciutils
+    run_step "Installing pciutils (for GPU detection)..." sudo "$PACMAN_BIN" -S --needed --noconfirm pciutils
 fi
 
 gpu_info="$(lspci -nn | grep -Ei 'VGA|3D|Display' || true)"
@@ -252,8 +262,37 @@ if [ ${#gpu_drivers[@]} -gt 0 ]; then
         fi
     done
 
-    run_step "Installing graphics drivers (Intel/AMD/VM)..." \
-        sudo pacman -S --needed --noconfirm "${unique_gpu_drivers[@]}"
+    {
+        echo "----- GPU detection $(date -Is) -----"
+        echo "$gpu_info"
+        echo "Driver packages: ${unique_gpu_drivers[*]}"
+        echo
+    } >>"$INSTALL_LOG"
+
+    whiptail --title "DTOS-2025" --infobox "\
+Installing graphics drivers (Intel/AMD/VM)...
+
+Packages:
+${unique_gpu_drivers[*]}" 12 70
+
+    if ! sudo "$PACMAN_BIN" -S --needed --noconfirm "${unique_gpu_drivers[@]}" \
+        > >(tee -a "$INSTALL_LOG") \
+        2> >(tee -a "$INSTALL_LOG" >&2); then
+        whiptail --title "Graphics Driver Install Failed" --msgbox "\
+Pacman failed while installing GPU drivers.
+
+Check $INSTALL_LOG for details.
+
+You can retry manually with:
+  sudo $PACMAN_BIN -S --needed ${unique_gpu_drivers[*]}" 16 72
+
+        if ! whiptail --title "Continue Installer?" --yesno "\
+Continue DTOS-2025 install without GPU drivers?
+
+Choosing 'No' will abort the installer." 14 72; then
+            error "Graphics driver installation failed. See $INSTALL_LOG for details."
+        fi
+    fi
 else
     whiptail --title "Graphics Drivers" --msgbox "No Intel/AMD GPU detected via lspci.
 
@@ -265,14 +304,14 @@ fi
 # ---------------------------------------------------------------------------
 
 run_step "Installing wallpaper tools (sxiv, xwallpaper)..." \
-    sudo pacman -S --needed --noconfirm sxiv xwallpaper
+    sudo "$PACMAN_BIN" -S --needed --noconfirm sxiv xwallpaper
 
 # ---------------------------------------------------------------------------
 # Build tools (required for paru/AUR packages)
 # ---------------------------------------------------------------------------
 
 run_step "Installing base-devel (needed for building paru/AUR packages)..." \
-    sudo pacman -S --needed --noconfirm base-devel
+    sudo "$PACMAN_BIN" -S --needed --noconfirm base-devel
 
 # ---------------------------------------------------------------------------
 # Ensure ~/.local/bin is on PATH (dmscripts, dm-run, etc.)
@@ -324,7 +363,7 @@ whiptail --title "DTOS-2025" --infobox "Font installation skipped (disabled in i
 if whiptail --title "Enable SDDM?" --yesno "SDDM is a graphical login manager.
 
 Would you like to install and enable SDDM now?" 12 60; then
-    run_step "Installing SDDM..." sudo pacman -S --needed --noconfirm sddm
+    run_step "Installing SDDM..." sudo "$PACMAN_BIN" -S --needed --noconfirm sddm
     run_step "Enabling SDDM..." sudo systemctl enable sddm.service --force
 else
     whiptail --title "SDDM Skipped" --msgbox "SDDM will NOT be enabled.
@@ -515,11 +554,11 @@ fi
 # Pywal removal (keep palette static)
 # ---------------------------------------------------------------------------
 
-if command -v wal >/dev/null 2>&1 || pacman -Q pywal >/dev/null 2>&1 || [ -d "$HOME/.config/wal" ] || [ -d "$HOME/.cache/wal" ]; then
+if command -v wal >/dev/null 2>&1 || "$PACMAN_BIN" -Q pywal >/dev/null 2>&1 || [ -d "$HOME/.config/wal" ] || [ -d "$HOME/.cache/wal" ]; then
     run_step "Removing pywal and its caches..." bash -c '
       # Uninstall pywal if the package is present
-      if pacman -Q pywal >/dev/null 2>&1; then
-        sudo pacman -Rns --noconfirm pywal || true
+      if "'"$PACMAN_BIN"'" -Q pywal >/dev/null 2>&1; then
+        sudo "'"$PACMAN_BIN"'" -Rns --noconfirm pywal || true
       fi
 
       # Drop wal caches/config so themes stop reapplying
