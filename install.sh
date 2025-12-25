@@ -195,6 +195,72 @@ run_step "Installing core packages (window managers + tools)..." \
     sudo pacman -S --needed --noconfirm "${core_pkgs[@]}"
 
 # ---------------------------------------------------------------------------
+# Graphics drivers (Intel/AMD + virtual machines)
+# ---------------------------------------------------------------------------
+
+# Ensure lspci is available for GPU detection
+if ! command -v lspci >/dev/null 2>&1; then
+    run_step "Installing pciutils (for GPU detection)..." sudo pacman -S --needed --noconfirm pciutils
+fi
+
+gpu_info="$(lspci -nn | grep -Ei 'VGA|3D|Display' || true)"
+gpu_drivers=()
+virt_type=""
+
+if echo "$gpu_info" | grep -qi intel; then
+    gpu_drivers+=(
+        mesa mesa-utils vulkan-mesa-layers libva-mesa-driver
+        vulkan-intel intel-media-driver libva-intel-driver xf86-video-intel
+    )
+fi
+
+if echo "$gpu_info" | grep -Eqi 'AMD|ATI'; then
+    gpu_drivers+=(
+        mesa mesa-utils vulkan-mesa-layers libva-mesa-driver
+        vulkan-radeon mesa-vdpau xf86-video-amdgpu
+    )
+fi
+
+# VM guest graphics drivers (installed only when running inside a VM)
+if command -v systemd-detect-virt >/dev/null 2>&1; then
+    virt_type="$(systemd-detect-virt 2>/dev/null || true)"
+fi
+
+case "$virt_type" in
+    kvm|qemu)
+        gpu_drivers+=(xf86-video-qxl xf86-video-fbdev)
+        ;;
+    oracle) # VirtualBox
+        gpu_drivers+=(virtualbox-guest-utils virtualbox-guest-modules-arch)
+        ;;
+    vmware)
+        gpu_drivers+=(xf86-video-vmware open-vm-tools)
+        ;;
+    microsoft) # Hyper-V
+        gpu_drivers+=(xf86-video-fbdev)
+        ;;
+esac
+
+if [ ${#gpu_drivers[@]} -gt 0 ]; then
+    # De-duplicate before installing so we don't spam pacman with repeats on hybrid setups
+    declare -A seen_drivers=()
+    unique_gpu_drivers=()
+    for pkg in "${gpu_drivers[@]}"; do
+        if [ -z "${seen_drivers[$pkg]}" ]; then
+            unique_gpu_drivers+=("$pkg")
+            seen_drivers[$pkg]=1
+        fi
+    done
+
+    run_step "Installing graphics drivers (Intel/AMD/VM)..." \
+        sudo pacman -S --needed --noconfirm "${unique_gpu_drivers[@]}"
+else
+    whiptail --title "Graphics Drivers" --msgbox "No Intel/AMD GPU detected via lspci.
+
+If you expected one, install drivers manually." 12 72
+fi
+
+# ---------------------------------------------------------------------------
 # Wallpaper tools (sxiv, xwallpaper)
 # ---------------------------------------------------------------------------
 
