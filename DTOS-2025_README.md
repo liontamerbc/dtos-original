@@ -6,12 +6,12 @@
 #   | |__| |  | |  | |__| |____) |  #
 #   |_____/   |_|   \____/|_____/   #
 #                                   #
-#            DTOS-2025              #
+#            DTOS-Original              #
 #####################################
 
-# DTOS-2025 README
+# DTOS-Original README
 
-DTOS-2025 is a modern, offline-capable, Derek Taylor–style desktop setup for
+DTOS-Original is a modern, offline-capable, Derek Taylor–style desktop setup for
 Arch-based systems. It provides:
 
 - Qtile (DT-inspired configuration)
@@ -28,7 +28,7 @@ A clean, minimal, keyboard-driven workflow that *you* control.
 ## Included In This Pack
 
 ```
-DTOS-2025/
+DTOS-Original/
  ├── install.sh
  ├── awesome/
  ├── qtile/
@@ -41,8 +41,8 @@ DTOS-2025/
 ## Installation
 
 ```bash
-unzip DTOS-2025.zip
-cd DTOS-2025
+unzip DTOS-Original.zip
+cd DTOS-Original
 chmod +x install.sh
 ./install.sh
 ```
@@ -75,7 +75,7 @@ sudo systemctl enable sddm
 Modify anything (configs, installer, scripts) then rebuild:
 
 ```bash
-zip -r DTOS-2025.zip DTOS-2025
+zip -r DTOS-Original.zip DTOS-Original
 ```
 
 ---

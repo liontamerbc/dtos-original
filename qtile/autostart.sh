@@ -4,7 +4,7 @@
 # Set keyboard layout explicitly (Qtile also has hook, but this is fine as backup)
 setxkbmap gb &
 
-# Start compositor (picom config is installed by DTOS-2025)
+# Start compositor (picom config is installed by DTOS-Original)
 picom --config "$HOME/.config/picom/picom.conf" &
 
 # Start network applet if installed
