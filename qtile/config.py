@@ -3,8 +3,6 @@ import json
 import os
 import socket
 import subprocess
-import time
-import urllib.request
 from pathlib import Path
 
 os.environ["PATH"] = os.pathsep.join([
@@ -23,77 +21,6 @@ try:
     from libqtile.backend.wayland import InputConfig
 except Exception:
     InputConfig = None
-
-# ---------- Location / weather ----------
-LOCATION_CACHE = Path.home() / ".cache/qtile/location.json"
-LOCATION_CACHE_TTL = 6 * 3600  # seconds
-# Generic fallback to avoid baking personal location into the config.
-DEFAULT_LOCATION = {"name": "Local", "lat": 0.0, "lon": 0.0}
-# Allow IP-based lookup so the widget can show the current city name.
-ALLOW_IP_LOCATION = True
-
-
-def _load_cached_location():
-    try:
-        with LOCATION_CACHE.open() as f:
-            cached = json.load(f)
-        ts = float(cached.get("ts", 0))
-        if ts and time.time() - ts < LOCATION_CACHE_TTL:
-            return cached
-    except Exception:
-        return None
-    return None
-
-
-def _save_location_cache(data):
-    try:
-        LOCATION_CACHE.parent.mkdir(parents=True, exist_ok=True)
-        to_write = dict(data)
-        to_write["ts"] = time.time()
-        with LOCATION_CACHE.open("w") as f:
-            json.dump(to_write, f)
-    except Exception as err:
-        logger.warning("Location cache write failed: %s", err)
-
-
-def _ip_lookup_location():
-    url = "https://ipapi.co/json"
-    try:
-        with urllib.request.urlopen(url, timeout=3) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except Exception as err:
-        logger.warning("Location lookup failed: %s", err)
-        return None
-
-    lat = data.get("latitude") or data.get("lat")
-    lon = data.get("longitude") or data.get("lon")
-    if lat is None or lon is None:
-        return None
-
-    name = data.get("city") or data.get("region") or data.get("country_name") or "Weather"
-    try:
-        lat = float(lat)
-        lon = float(lon)
-    except Exception:
-        return None
-
-    return {"name": name, "lat": lat, "lon": lon}
-
-
-def get_location():
-    if not ALLOW_IP_LOCATION:
-        return DEFAULT_LOCATION.copy()
-
-    cached = _load_cached_location()
-    if cached:
-        return cached
-
-    live = _ip_lookup_location()
-    if live:
-        _save_location_cache(live)
-        return live
-
-    return DEFAULT_LOCATION.copy()
 
 # ---------- Startup hooks ----------
 
@@ -208,30 +135,6 @@ def total_updates_count():
     return str(repo + aur)
 
 
-def current_temp():
-    """Fetch current temp with one decimal and show city when available."""
-    loc = get_location()
-    name = loc.get("name") or "Temp"
-    lat = loc.get("lat", DEFAULT_LOCATION["lat"])
-    lon = loc.get("lon", DEFAULT_LOCATION["lon"])
-    label = name
-    url = (
-        "https://api.open-meteo.com/v1/forecast"
-        f"?latitude={lat}&longitude={lon}"
-        "&current=temperature_2m"
-        "&timezone=auto"
-    )
-    try:
-        with urllib.request.urlopen(url, timeout=5) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            temp = data.get("current", {}).get("temperature_2m")
-            if temp is None:
-                return f"{label} -- C"
-            return f"{label} {float(temp):.1f} C"
-    except Exception as err:
-        logger.warning("Weather lookup failed: %s", err)
-        return f"{label} -- C"
-
 # ---------- Network widget helpers ----------
 # The stock widget.Net throws when a listed interface disappears (common in VMs),
 # then stops polling. Read totals ourselves and format safely.
@@ -320,6 +223,22 @@ def move_window_to_group(base, screen_index=None):
             qtile.current_window.togroup(name)
 
     return _inner
+
+# ---------- Status widget helpers ----------
+
+
+def build_temp_widget(foreground, background):
+    """Show internal sensor temperature when available; degrade to text."""
+    try:
+        return widget.ThermalSensor(
+            foreground=foreground,
+            background=background,
+            fmt="Temp: {}",
+            padding=5,
+        )
+    except Exception as err:
+        logger.warning("Thermal sensor unavailable: %s", err)
+        return widget.TextBox(text="Temp: N/A", foreground=foreground, background=background, padding=5)
 
 # Systray helper
 def build_tray_widget(background):
@@ -759,7 +678,7 @@ def init_widgets_list(visible_groups, include_systray=True):
         ),
         powerline(colors[3], colors[4]),
         widget.GenPollText(
-            func=current_temp,
+            func=build_temp_widget,
             update_interval=900,
             foreground=colors[1],
             background=colors[4],
