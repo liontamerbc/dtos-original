@@ -8,7 +8,7 @@
 #   |_____/   |_|   \____/|_____/
 #
 #
-#  DTOS-2025 Installer (Qtile + Awesome)
+#  DTOS-Original Installer (Qtile + Awesome)
 #  Inspired by Derek Taylor / DistroTube style
 #
 # This script assumes:
@@ -32,7 +32,7 @@ if [ -z "$PACMAN_BIN" ]; then
     echo "ERROR: pacman not found on PATH. This installer requires pacman."
     exit 1
 fi
-INSTALL_LOG="${INSTALL_LOG:-/tmp/dtos-2025-install.log}"
+INSTALL_LOG="${INSTALL_LOG:-/tmp/dtos-original-install.log}"
 : >"$INSTALL_LOG"
 
 # ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ textbox=black,lightgray
 # ---------------------------------------------------------------------------
 
 error() {
-    whiptail --title "DTOS-2025 ERROR" --msgbox "$1" 10 70
+    whiptail --title "DTOS-Original ERROR" --msgbox "$1" 10 70
     clear
     exit 1
 }
@@ -80,7 +80,7 @@ error() {
 run_step() {
     local msg="$1"
     shift
-    whiptail --title "DTOS-2025" --infobox "$msg" 7 60
+    whiptail --title "DTOS-Original" --infobox "$msg" 7 60
     "$@" || error "$msg"
 }
 
@@ -113,7 +113,7 @@ install_weather_icons_manual() {
 # ---------------------------------------------------------------------------
 
 # Welcome screen
-whiptail --title "Installing DTOS-2025!" --msgbox "\
+whiptail --title "Installing DTOS-Original!" --msgbox "\
 This script will set up a DT-style tiling desktop
 (Xmonad, AwesomeWM and/or Qtile) plus tools and configs.
 
@@ -121,7 +121,7 @@ You will be asked a few questions before anything changes." 15 70
 
 # Distro warning
 if ! grep -qs 'ID=arch' /etc/os-release; then
-    whiptail --title "Installing DTOS-2025!" --msgbox "\
+    whiptail --title "Installing DTOS-Original!" --msgbox "\
 WARNING: This installer is written for Arch Linux
 and Arch-based distributions that use pacman.
 
@@ -129,7 +129,7 @@ Running it on anything else is very likely to break things." 15 72
 fi
 
 # Big caution screen
-whiptail --title "Installing DTOS-2025!" --msgbox "\
+whiptail --title "Installing DTOS-Original!" --msgbox "\
 This script installs a large number of packages and
 overwrites some configuration files in your home directory.
 
@@ -161,10 +161,10 @@ if [ "$INSTALL_XMONAD" = "n" ] && [ "$INSTALL_AWESOME" = "n" ] && [ "$INSTALL_QT
 fi
 
 # Final confirmation, like DT's 'Shall we begin installing DTOS?'
-if ! whiptail --title "Installing DTOS-2025!" --yesno "\
-Shall we begin installing DTOS-2025 now?" 10 60; then
+if ! whiptail --title "Installing DTOS-Original!" --yesno "\
+Shall we begin installing DTOS-Original now?" 10 60; then
     clear
-    echo "DTOS-2025: installation cancelled by user. Nothing changed."
+    echo "DTOS-Original: installation cancelled by user. Nothing changed."
     exit 0
 fi
 
@@ -269,7 +269,7 @@ if [ ${#gpu_drivers[@]} -gt 0 ]; then
         echo
     } >>"$INSTALL_LOG"
 
-    whiptail --title "DTOS-2025" --infobox "\
+    whiptail --title "DTOS-Original" --infobox "\
 Installing graphics drivers (Intel/AMD/VM)...
 
 Packages:
@@ -287,7 +287,7 @@ You can retry manually with:
   sudo $PACMAN_BIN -S --needed ${unique_gpu_drivers[*]}" 16 72
 
         if ! whiptail --title "Continue Installer?" --yesno "\
-Continue DTOS-2025 install without GPU drivers?
+Continue DTOS-Original install without GPU drivers?
 
 Choosing 'No' will abort the installer." 14 72; then
             error "Graphics driver installation failed. See $INSTALL_LOG for details."
@@ -354,7 +354,7 @@ EOF
 # Fonts
 # ---------------------------------------------------------------------------
 
-whiptail --title "DTOS-2025" --infobox "Font installation skipped (disabled in installer)." 7 60
+whiptail --title "DTOS-Original" --infobox "Font installation skipped (disabled in installer)." 7 60
 
 # ---------------------------------------------------------------------------
 # SDDM (optional)
@@ -483,8 +483,8 @@ fi
 
 if [ -d "$SCRIPT_DIR/dtos-backgrounds" ]; then
     run_step "Installing DTOS backgrounds..." bash -c '
-    sudo mkdir -p /usr/share/backgrounds/dtos-2025
-    sudo cp -r "'"$SCRIPT_DIR"'/dtos-backgrounds/"* /usr/share/backgrounds/dtos-2025/ 2>/dev/null || true
+    sudo mkdir -p /usr/share/backgrounds/dtos-original
+    sudo cp -r "'"$SCRIPT_DIR"'/dtos-backgrounds/"* /usr/share/backgrounds/dtos-original/ 2>/dev/null || true
   '
 else
     whiptail --title "Backgrounds Warning" --msgbox "No ./dtos-backgrounds directory found next to install.sh.
@@ -576,19 +576,19 @@ fi
 # Finish
 # ---------------------------------------------------------------------------
 
-whiptail --title "DTOS-2025 Installed" --msgbox "DTOS-2025 installation is complete.
+whiptail --title "DTOS-Original Installed" --msgbox "DTOS-Original installation is complete.
 
 You can now:
   • Reboot and choose your DTOS window manager (Xmonad / AwesomeWM / Qtile)
   • Or start them from a TTY with startx (if configured)
-Enjoy your DTOS-2025 desktop." 18 72
+Enjoy your DTOS-Original desktop." 18 72
 
 if whiptail --title "Reboot Now?" --yesno "Do you want to reboot now?" 8 40; then
     reboot
 fi
 
 clear
-echo "DTOS-2025 installation finished. Reboot when ready."
+echo "DTOS-Original installation finished. Reboot when ready."
 
 # Install dunst auto-setup script
 mkdir -p "$HOME/.local/bin"
