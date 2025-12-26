@@ -184,6 +184,7 @@ core_pkgs=(
     rofi dmenu
     picom starship
     feh sxiv xwallpaper
+    maim slop xdotool xclip wl-clipboard grim slurp
     git fzf wget curl unzip
     python-psutil lm_sensors
     spice-vdagent
