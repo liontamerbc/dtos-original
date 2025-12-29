@@ -75,3 +75,11 @@ For even more fun, add the following line to your .bashrc or .zshrc and you will
 
 	### RANDOM COLOR SCRIPT ###
 	colorscript random
+
+To show the PACMAN color banner on shell startup without breaking the real `pacman` command, use the renamed helper installed as `~/.local/bin/pacman-colors`:
+
+```sh
+if [ -x "$HOME/.local/bin/pacman-colors" ] && [ -t 1 ]; then
+  "$HOME/.local/bin/pacman-colors"
+fi
+```

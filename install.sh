@@ -439,8 +439,42 @@ if [ -d "$SCRIPT_DIR/shell-color-scripts" ]; then
       chmod +x "$bin_dir/colorscript"
     fi
 
-    if ! grep -q "colorscript -r" "$HOME/.bashrc" 2>/dev/null; then
-      echo "if command -v colorscript >/dev/null 2>&1; then colorscript -r; fi" >> "$HOME/.bashrc"
+    # Provide pacman colorscript without shadowing the real package manager
+    if [ -f "$colors_dir/pacman" ]; then
+      cp "$colors_dir/pacman" "$bin_dir/pacman-colors"
+      chmod +x "$bin_dir/pacman-colors"
+    fi
+
+    if [ -f "$bin_dir/pacman" ] && ! cmp -s "$bin_dir/pacman" /usr/bin/pacman 2>/dev/null; then
+      mv "$bin_dir/pacman" "$bin_dir/pacman-colors.bak.$(date +%s)"
+    fi
+
+    ensure_line() {
+      local line="$1" file="$2"
+      mkdir -p "$(dirname "$file")"
+      grep -Fqx "$line" "$file" 2>/dev/null || printf "\n%s\n" "$line" >> "$file"
+    }
+
+    bash_alias='alias pacman-colors="$HOME/.local/bin/pacman-colors"'
+    zsh_alias='alias pacman-colors="$HOME/.local/bin/pacman-colors"'
+    bash_hook='if [ -x "$HOME/.local/bin/pacman-colors" ] && [ -t 1 ]; then "$HOME/.local/bin/pacman-colors"; fi'
+    zsh_hook='if [[ -t 1 && -x "$HOME/.local/bin/pacman-colors" ]]; then "$HOME/.local/bin/pacman-colors"; fi'
+
+    ensure_line "$bash_alias" "$HOME/.bashrc"
+    ensure_line "$bash_hook" "$HOME/.bashrc"
+    ensure_line "$zsh_alias" "$HOME/.zshrc"
+    ensure_line "$zsh_hook" "$HOME/.zshrc"
+
+    fish_alias='alias pacman-colors "$HOME/.local/bin/pacman-colors"'
+    fish_hook="if status is-interactive; and test -x \$HOME/.local/bin/pacman-colors
+    \$HOME/.local/bin/pacman-colors
+end"
+    if command -v fish >/dev/null 2>&1 || [ -d "$HOME/.config/fish" ] || [ -f "$HOME/.config/fish/config.fish" ]; then
+      mkdir -p "$HOME/.config/fish"
+      ensure_line "$fish_alias" "$HOME/.config/fish/config.fish"
+      if ! grep -Fq "status is-interactive; and test -x \$HOME/.local/bin/pacman-colors" "$HOME/.config/fish/config.fish" 2>/dev/null; then
+        printf "\n%s\n" "$fish_hook" >> "$HOME/.config/fish/config.fish"
+      fi
     fi
   '
 else
