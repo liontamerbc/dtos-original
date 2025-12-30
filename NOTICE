@@ -1,0 +1,9 @@
+DTOS-Original - Notices
+
+- This repository’s own additions and glue code are provided under GPL-3.0 (see LICENSE).
+- Bundled components retain their original licenses:
+  * dmscripts: GPL-3.0
+  * Lain (Awesome widgets/layouts): GPL-2.0
+  * shell-color-scripts: MIT
+  * Various Awesome/Qtile configs/scripts may carry their upstream GPL terms as noted in their files.
+- Wallpapers in dtos-backgrounds/ include mixed/unknown origins; they are copied as-is for convenience. If you own a wallpaper and need it removed, please open an issue.
