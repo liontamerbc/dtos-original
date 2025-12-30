@@ -518,8 +518,8 @@ fi
 
 if [ -d "$SCRIPT_DIR/dtos-backgrounds" ]; then
     run_step "Installing DTOS backgrounds..." bash -c '
-    sudo mkdir -p /usr/share/backgrounds/dtos-original
-    sudo cp -r "'"$SCRIPT_DIR"'/dtos-backgrounds/"* /usr/share/backgrounds/dtos-original/ 2>/dev/null || true
+    sudo mkdir -p /usr/share/backgrounds/dtos-backgrounds
+    sudo cp -r "'"$SCRIPT_DIR"'/dtos-backgrounds/"* /usr/share/backgrounds/dtos-backgrounds/ 2>/dev/null || true
   '
 else
     whiptail --title "Backgrounds Warning" --msgbox "No ./dtos-backgrounds directory found next to install.sh.
