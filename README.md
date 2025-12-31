@@ -53,7 +53,9 @@ chmod +x install.sh
 <h3 align="center">🎨 After Installation</h3>
 <ul>
   <li>Wallpapers: place them in <code>/usr/share/backgrounds/dtos-backgrounds</code>.</li>
+  <br>
   <li>SDDM themes: place them in <code>/usr/share/sddm/themes</code>.</li>
+  <br>
   <li>Enable SDDM manually: <code>sudo systemctl enable sddm</code>.</li>
 </ul>
 
