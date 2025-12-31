@@ -60,6 +60,15 @@ chmod +x install.sh
 zip -r DTOS-Original.zip DTOS-Original
 ```
 
+<h3 align="center">🔄 Repack For Sharing (optional)</h3>
+
+```bash
+rm -f DTOS-Original.zip
+zip -r DTOS-Original.zip DTOS-Original
+```
+
+<p>If you just clone and use the repo, you can skip this. Run it only when you want to rebuild a distributable zip after making changes.</p>
+
 <h3 align="center">🙏 Credits</h3>
 <ul>
   <li>Inspired by <strong>Derek Taylor (DistroTube)</strong>.</li>
