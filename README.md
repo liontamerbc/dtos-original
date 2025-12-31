@@ -54,12 +54,6 @@ chmod +x install.sh
   <li>Enable SDDM manually: <code>sudo systemctl enable sddm</code>.</li>
 </ul>
 
-<h3 align="center">🔄 Update The Pack</h3>
-
-```bash
-zip -r DTOS-Original.zip DTOS-Original
-```
-
 <h3 align="center">🔄 Repack For Sharing (optional)</h3>
 
 ```bash
