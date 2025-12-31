@@ -20,8 +20,11 @@
 
 <ul>
   <li>Qtile and AwesomeWM configs styled after DT’s workflow.</li>
+  <br>
   <li>dmscripts and shell-color-scripts shipped locally to stay offline-friendly.</li>
+  <br>
   <li>Optional SDDM enablement plus backgrounds to match the look.</li>
+  <br>
   <li>paru AUR helper included for package installs.</li>
 </ul>
 
