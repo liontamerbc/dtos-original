@@ -20,11 +20,8 @@
 
 <ul>
   <li>Qtile and AwesomeWM configs styled after DT’s workflow.</li>
-  <br>
   <li>dmscripts and shell-color-scripts shipped locally to stay offline-friendly.</li>
-  <br>
   <li>Optional SDDM enablement plus backgrounds to match the look.</li>
-  <br>
   <li>paru AUR helper included for package installs.</li>
 </ul>
 
@@ -53,9 +50,7 @@ chmod +x install.sh
 <h3 align="center">🎨 After Installation</h3>
 <ul>
   <li>Wallpapers: place them in <code>/usr/share/backgrounds/dtos-backgrounds</code>.</li>
-  <br>
   <li>SDDM themes: place them in <code>/usr/share/sddm/themes</code>.</li>
-  <br>
   <li>Enable SDDM manually: <code>sudo systemctl enable sddm</code>.</li>
 </ul>
 
