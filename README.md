@@ -2,7 +2,7 @@
 <!-- <p align="center"><img src="YOUR_BANNER_URL_HERE" alt="DTOS-Original Banner" /></p> -->
 
 <h1 align="center">🦁 DTOS-Original 🦁</h1>
-<h3 align="center">Derek Taylor–inspired tiling desktop for Arch-based systems</h3>
+<h3 align="center">Derek Taylor’s DTOS tiling desktop for Arch-based systems</h3>
 
 <p align="center">A modern, offline-capable, keyboard-first setup that keeps DT’s spirit while letting you customize everything.</p>
 
