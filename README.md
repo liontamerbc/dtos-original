@@ -37,6 +37,7 @@ DTOS-Original/
 ```
 
 <h3 align="center">🚀 Install</h3>
+<p align="center"><strong>Requires:</strong> Arch/Arch-based distro with <code>pacman</code> and <code>sudo</code>.</p>
 
 ```bash
 unzip DTOS-Original.zip
@@ -53,6 +54,8 @@ chmod +x install.sh
   <li><strong>SDDM themes:</strong> place them in <code>/usr/share/sddm/themes</code>.</li>
   <li><strong>Enable SDDM manually:</strong> <code>sudo systemctl enable sddm</code>.</li>
 </ul>
+
+<p><strong>Need to reapply configs later?</strong> Run <code>./apply-customizations.sh</code> from the repo to re-copy bundled configs without rerunning the installer.</p>
 
 <h3 align="center">🔄 Repack For Sharing (optional)</h3>
 
